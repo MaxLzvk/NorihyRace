@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pangolin</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+	<style>
+			
+            #jeu{
+			background-image: url(img/background.jpg);			
+			background-size: cover;
+			background-position: 0px auto;
+			background-repeat : repeat-x;
+			overflow: hidden;
+			width: 1400px;
+			height: 800px;
+			position: relative;
+			position: fixed;		
+		}
+		h1{
+			font-family: Consolas;
+			font-style: italic;
+
+			
+			position: absolute;
+			text-align: center;
+			font-size: 40pt;			
+			z-index: -5;
+			left: 0px;
+			top: 0px;
+			color: orange;
+			z-index: 100;
+		}
+		
+		.left{			
+			text-align: left;
+			margin-left: 10%;
+			width: 90%;
+		}
+		
+		.right{			
+			text-align: right;
+			margin-right: 10%;
+			width: 90%;
+		}
+		
+		#norihy{
+			background-image: url(img/norihy.png);
+			position: absolute;
+			background-size: cover;
+			width: 80px;
+			height: 130px;
+			left: 250px;
+			bottom: 80px;
+            transform-origin: 52% 70%;
+            z-index: 50;
+		}
+		
+		#moise{
+			background-image: url(img/moise.png);
+			position: absolute;
+			background-size: cover;
+			width: 80px;
+			height: 160px;
+			left: 1000px;
+			bottom: 80px;
+			transform-origin: 52% 70%;
+			z-index: 40;
+		}
+		
+		#noodles{
+			background-image: url('img/burgre.png');
+			position: absolute;
+			background-size: cover;
+			width: 170px;
+			height: 100px;
+			left: 1000px;
+			bottom: 80px;
+			transform-origin: 52% 70%;
+			z-index: 40;
+		}
+		
+		#gameover{
+			display:none;
+			width: 100%;
+			top: 36%;
+			text-align: center;
+			color: rgb(89, 14, 228);
+            
+		}
+	</style>
+</head>
+<body id="corps">
+	<div id="jeu">
+		<h1 class="right">Time : <span id="temps">0</span></h1>
+		<h1 class="left">Score : <span id="score">0</span></h1>
+		<h1 id="gameover">GAME OVER press F5 to restart</h1>
+		<div id="sol">
+		</div>
+		<div id="norihy">
+		</div>
+		<div id="moise">
+		</div>
+		<div id="noodles">
+		</div>
+	</div>
+	<div style="display:none" id="preload">
+		<img src="img/moise.png">
+		<img src="img/norihy.png">
+        <img src="img/burgre.png" alt="">
+	</div>
+    <script>
+		let points = 0;	
+		let gauche = false;
+		let droite = false;
+		let haut = false;
+		let mort = false;
+		vitesseMax = 200;
+		tempsJeuMax = 60;
+		norihy.sens = 1;
+		jeu.positionFond = 0;
+		sol.positionFond = 0;
+		norihy.vitesseX = 0;
+		norihy.vitesseY = 0;
+		norihy.haut = 0;
+		norihy.rotation = 0;
+		moise.position = -200;
+		noodles.position = 600;
+		moise.estvisible = false;
+		noodles.estvisible = false;
+		let startTime = Date.now();
+		
+		// Evite la selection des images mais elles restent clickable
+		window.onload = function() {
+			document.body.onselectstart = function() {
+				return false;
+			}
+		}		
+		
+		//Fait avancer le monde
+		function updateWorld(){	
+			// Affiche le temps
+			let tempsRestant = (tempsJeuMax-(Date.now()-startTime)/1000);			
+			if (tempsRestant<=0){				
+				mort = true;
+				gameover.style.display = "block";
+				temps.style.color = "red";				
+			}						
+			// Gestion des touches
+			if (gauche && !mort)
+				norihy.vitesseX -= 0.2;
+			if (droite && !mort)
+				norihy.vitesseX += 0.2;			
+			// Gravité			
+			norihy.vitesseY -= 0.8;			
+			if (norihy.haut <= 0 && !mort){
+				norihy.vitesseY = 0;
+				norihy.haut = 0;
+			}
+			// Frottement dans l'air
+			if (!droite)
+				if (norihy.vitesseX > 0)
+					norihy.vitesseX -= norihy.vitesseX * 0.02;
+			if (!gauche)
+				if (norihy.vitesseX < 0)
+					norihy.vitesseX -= norihy.vitesseX * 0.02;
+			if (!gauche && !droite)
+				if (norihy.vitesseX > -0.5 && norihy.vitesseX < 0.5)
+					norihy.vitesseX = 0;
+			// Evite d'aller trop vite
+			if (norihy.vitesseX < -vitesseMax)
+				norihy.vitesseX = -vitesseMax;
+			if (norihy.vitesseX > vitesseMax)
+				norihy.vitesseX = vitesseMax;
+			// Si on est arrêté le pangolin ne bouge plus
+			if (!mort){
+				if (norihy.vitesseX == 0){
+					norihy.rotation = 0;			
+					norihy.style.backgroundImage = "url('img/norihy.png')";
+				} else {					
+					norihy.style.backgroundImage = "url('img/norihy.png')";
+				}
+			} else {
+				tempsRestant = 0;
+			}
+			// Mouvements des objets
+			noodles.position -= norihy.vitesseX * 1.4;
+			moise.position -= norihy.vitesseX * 1.4;
+			noodles.style.left = noodles.position + "px";
+			moise.style.left = moise.position + "px";
+			// Si un objet est visible on le laisse à l'écran, et s'il redevient invisible il est téléporté
+			checkVisibility(moise);
+			checkVisibility(noodles);
+			// Mouvements des fonds d'écran
+			jeu.positionFond -= norihy.vitesseX;
+			sol.positionFond -= norihy.vitesseX * 1.4;
+			jeu.style.backgroundPosition = jeu.positionFond*0.4 + "px 0px";
+			sol.style.backgroundPosition = sol.positionFond + "px 0px";
+			// Mouvement et animation du pangolin
+			norihy.haut += norihy.vitesseY;
+			norihy.rotation += norihy.vitesseX;
+			norihy.style.bottom = (norihy.haut + 80) + "px";
+			norihy.style.transform = "rotateZ(" + norihy.rotation + "deg) scaleX(" + norihy.sens + ")";			
+			// Vérifie si le pangolin touche une plante
+			if (checkCollisions(norihy, moise) && !mort){
+				norihy.style.backgroundImage = "url('img/norihy.png')";				
+				norihy.vitesseY = 15;
+				norihy.vitesseX = 0;
+				mort = true;
+				gameover.style.display = "block";
+			}
+			// Si on touche un plat de noodles on gagne des points
+			if (checkCollisions(norihy, noodles) && !mort){
+				points++;
+				score.innerHTML = points;
+				vitesseMax += 0.2;
+				noodles.position = jeu.clientWidth + Math.random() * jeu.clientWidth;
+			}
+			// Affiche le temps restant
+			temps.innerHTML = tempsRestant.toFixed(2);
+			// On se rappel (timer)
+			requestAnimationFrame(updateWorld);
+		}		
+		
+		function checkCollisions(box1, box2){			
+		    if((box2.offsetLeft >= box1.offsetLeft + box1.clientWidth*0.8)      // trop à droite
+				|| (box2.offsetLeft + box2.clientWidth <= box1.offsetLeft+0.2*box1.clientWidth) // trop à gauche
+				|| (box2.offsetTop >= box1.offsetTop + box1.clientHeight) // trop en bas
+				|| (box2.offsetTop + box2.clientHeight <= box1.offsetTop))  // trop en haut
+					return false; 
+	else
+					return true; 
+		}
+		
+		function checkVisibility(img){
+			if (img.position > -img.clientWidth && img.position < screen.width){
+				img.estvisible = true;
+			} else {
+				if (img.estvisible){					
+					img.position = jeu.clientWidth + Math.random() * jeu.clientWidth*2;					
+					img.estvisible = false;
+				} else {
+					if (img.position < -jeu.clientWidth*2 || img.position > jeu.clientWidth*2){
+						img.estvisible = true;
+					}
+				}
+			}
+		}
+		
+		// Si on enfonce une touche
+		document.onkeydown = function(event){						
+			if (!mort){
+				if (event.keyCode == 37 && !gauche){
+					norihy.sens = -1;
+					gauche = true;
+				}
+				if (event.keyCode == 39 && !droite){
+					norihy.sens = 1;
+					droite = true;
+				}
+			}
+			if (event.keyCode == 32 && norihy.haut == 0){
+				haut = true;
+				norihy.haut = 1;
+				norihy.vitesseY = 20;
+			}							
+		}
+		
+		// Si on relache une touche
+		document.onkeyup = function(event){			
+			if (event.keyCode == 37){
+				gauche = false;
+			}		
+			if (event.keyCode == 39){
+				droite = false;
+			}
+			if (event.keyCode == 32)
+				haut = false;
+		}
+				
+		// Appel une première fois à la fonction d'animation
+		updateWorld();
+    </script>
+</body>
+</html>
